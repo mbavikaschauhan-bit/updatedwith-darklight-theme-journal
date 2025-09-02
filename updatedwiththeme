@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grotiq Capital - Trading Journal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Theme (Default) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-muted: #adb5bd;
+            --border-color: #dee2e6;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --accent-color: #007bff;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #404040;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --text-muted: #808080;
+            --border-color: #555555;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --accent-color: #4da6ff;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            /* blue-500 */
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .nav-item {
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+
+        .nav-item.active {
+            background-color: #3b82f6;
+            /* blue-500 */
+            color: white;
+            border-radius: 0.5rem;
+        }
+
+        .nav-item:not(.active):hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .nav-item.active svg, .nav-item.active i {
+             stroke: white;
+        }
+        
+        /* For Webkit browsers */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #94a3b8;
+            border-radius: 20px;
+            border: 3px solid transparent;
+            background-clip: content-box;
+        }
+        
+        [data-theme="dark"] ::-webkit-scrollbar-thumb {
+            background-color: #475569;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0;
+ transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0);
+ }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg);
+ }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            vertical-align: text-bottom;
+            border: 0.15em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin .75s linear infinite;
+        }
+
+        .page.active {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        
+        .calendar-day {
+            min-height: 100px;
+        }
+        
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            min-width: 250px;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .toast-success { background-color: #22c55e;
+ }
+        .toast-error { background-color: #ef4444;
+ }
+        .toast-info { background-color: #3b82f6;
+ }
+        
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="toast-container"></div>
+
+    <!-- Main App Wrapper -->
+    <div id="app-container" class="hidden relative h-screen md:flex">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 flex-shrink-0 flex-col fixed inset-y-0 left-0 z-40 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-200 ease-in-out flex" style="background-color: var(--bg-primary); border-right: 1px solid var(--border-color);">
+            <div class="h-16 flex items-center justify-center px-4" style="border-bottom: 1px solid var(--border-color);">
+                <h1 class="text-xl font-bold" style="color: var(--text-primary);">Grotiq Capital</h1>
+            </div>
+            <nav class="flex-1 px-4 py-4 space-y-2">
+                <a href="#" data-page="dashboard" class="nav-item flex items-center px-4 py-2 rounded-md active" style="color: var(--text-secondary);">
+                    <i data-feather="home" class="mr-3 h-5 w-5"></i> <span>Dashboard</span>
+                </a>
+                <a href="#" data-page="add-trade" class="nav-item flex items-center px-4 py-2 rounded-md" style="color: var(--text-secondary);">
+                    <i data-feather="plus-circle" class="mr-3 h-5 w-5"></i> <span>Add Trade</span>
+                </a>
+                <a href="#" data-page="trade-calendar" class="nav-item flex items-center px-4 py-2 rounded-md" style="color: var(--text-secondary);">
+                    <i data-feather="calendar" class="mr-3 h-5 w-5"></i> <span>Trading Calendar</span>
+                </a>
+                <a href="#" data-page="trade-history" class="nav-item flex items-center px-4 py-2 rounded-md" style="color: var(--text-secondary);">
+                    <i data-feather="list" class="mr-3 h-5 w-5"></i> <span>Trade History</span>
+                </a>
+                <a href="#" data-page="fund-management" class="nav-item flex items-center px-4 py-2 rounded-md" style="color: var(--text-secondary);">
+                    <i class="mr-3 h-5 w-5 flex items-center justify-center font-bold text-lg not-italic">₹</i>
+                    <span>Fund Management</span>
+                </a>
+                <a href="#" data-page="reports" class="nav-item flex items-center px-4 py-2 rounded-md" style="color: var(--text-secondary);">
+                    <i data-feather="bar-chart-2" class="mr-3 h-5 w-5"></i> <span>Reports</span>
+                </a>
+                <a href="#" data-page="trade-statement" class="nav-item flex items-center px-4 py-2 rounded-md" style="color: var(--text-secondary);">
+                    <i data-feather="file-text" class="mr-3 h-5 w-5"></i> <span>Trade Statement</span>
+                </a>
+                <a href="#" data-page="profile" class="nav-item flex items-center px-4 py-2 rounded-md" style="color: var(--text-secondary);">
+                    <i data-feather="user" class="mr-3 h-5 w-5"></i> <span>User Profile</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex flex-col flex-1 w-full overflow-hidden">
+            <header class="sticky top-0 backdrop-blur-lg z-30 h-16 flex items-center justify-between px-4 md:px-8" style="background-color: var(--bg-primary); border-bottom: 1px solid var(--border-color);">
+                <div class="flex items-center space-x-4">
+                    <button id="menu-toggle-btn" class="md:hidden p-2 rounded-full" style="color: var(--text-primary); background-color: var(--bg-secondary);">
+                        <i data-feather="menu" class="h-6 w-6"></i>
+                    </button>
+                    <h2 id="page-title" class="text-xl font-semibold" style="color: var(--text-primary);">Dashboard</h2>
+                </div>
+                <div class="flex items-center space-x-2 md:space-x-4">
+                    <p id="user-display-name" class="hidden md:block text-sm font-medium" style="color: var(--text-secondary);"></p>
+                    <!-- New Theme Toggle Start -->
+                    <div class="flex items-center justify-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-500"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <label for="theme-toggle-input" class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" value="" id="theme-toggle-input" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </div>
+                    <!-- New Theme Toggle End -->
+                     <button class="logout-btn p-2 rounded-full" style="color: var(--text-primary); background-color: var(--bg-secondary);" title="Logout">
+                         <i data-feather="log-out" class="h-5 w-5"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <main id="main-content" class="flex-1 overflow-y-auto">
+                <div class="p-4 md:p-8">
+                    <!-- Dashboard Page -->
+                    <div id="dashboard" class="page active">
+                        
+                        <!-- Performance Stats -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <h3 class="text-sm font-medium" style="color: var(--text-secondary);">Net P&L</h3>
+                                <p id="db-net-pnl" class="text-2xl font-bold mt-2" style="color: var(--text-primary);">₹0.00</p>
+                                <p id="db-total-trades" class="text-xs" style="color: var(--text-muted);">0 trades</p>
+                            </div>
+                            <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <h3 class="text-sm font-medium" style="color: var(--text-secondary);">Win Rate</h3>
+                                <p id="db-win-rate" class="text-2xl font-bold mt-2" style="color: var(--text-primary);">0%</p>
+                                <div class="flex items-center text-xs" style="color: var(--text-muted);">
+                                    <span id="db-won-trades" class="text-green-500 mr-2">0 won</span>
+                                    <span id="db-lost-trades" class="text-red-500">0 lost</span>
+                                </div>
+                            </div>
+                            <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <h3 class="text-sm font-medium" style="color: var(--text-secondary);">Profit Factor</h3>
+                                <p id="db-profit-factor" class="text-2xl font-bold mt-2" style="color: var(--text-primary);">0.00</p>
+                                <p class="text-xs" style="color: var(--text-muted);">Gross P&L split</p>
+                            </div>
+                            <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <h3 class="text-sm font-medium" style="color: var(--text-secondary);">Avg win/loss trade</h3>
+                                <p id="db-avg-win-loss" class="text-2xl font-bold mt-2" style="color: var(--text-primary);">0.00</p>
+                                <div class="flex items-center text-xs" style="color: var(--text-muted);">
+                                    <span id="db-avg-win" class="text-green-500 mr-2">+₹0.00</span>
+                                    <span id="db-avg-loss" class="text-red-500">-₹0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Summary -->
+                        <div class="rounded-lg shadow-sm p-6 mb-8" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                            <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">Account Summary</h3>
+                            <div id="db-account-summary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div><p class="text-sm" style="color: var(--text-secondary);">NET ACCOUNT VALUE</p><p class="text-2xl font-bold" style="color: var(--text-primary);">₹0.00</p></div>
+                                <div><p class="text-sm" style="color: var(--text-secondary);">NET REALIZED P&L</p><p class="text-2xl font-bold" style="color: var(--text-primary);">₹0.00</p></div>
+                                <div><p class="text-sm" style="color: var(--text-secondary);">AVAILABLE CASH</p><p class="text-2xl font-bold" style="color: var(--text-primary);">₹0.00</p></div>
+                                <div><p class="text-sm" style="color: var(--text-secondary);">DEPLOYED CAPITAL</p><p class="text-2xl font-bold" style="color: var(--text-primary);">₹0.00</p></div>
+                                <div><p class="text-sm" style="color: var(--text-secondary);">TOTAL DEPOSITS</p><p class="text-2xl font-bold" style="color: var(--text-primary);">₹0.00</p></div>
+                                <div><p class="text-sm" style="color: var(--text-secondary);">TOTAL WITHDRAWN</p><p class="text-2xl font-bold" style="color: var(--text-primary);">₹0.00</p></div>
+                                <div><p class="text-sm" style="color: var(--text-secondary);">STARTING BALANCE</p><p class="text-2xl font-bold" style="color: var(--text-primary);">₹0.00</p></div>
+                            </div>
+                            <p class="text-xs" style="color: var(--text-muted);">Returns are shown once deposits are made.</p>
+                        </div>
+                        
+
+                        <!-- Gemini AI Features -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                            <div class="rounded-lg shadow-sm p-6" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-lg font-semibold" style="color: var(--text-primary);">✨ AI Weekly Insights</h3>
+                                        <p class="text-sm" style="color: var(--text-secondary);">Get a summary of your trading performance.</p>
+                                    </div>
+                                    <button id="ai-summary-btn" class="btn-primary font-semibold py-2 px-4 rounded-md shadow-sm text-sm whitespace-nowrap">
+                                        <span class="btn-text">Generate Summary</span>
+                                        <span class="spinner hidden"></span>
+                                    </button>
+                                </div>
+                                <div id="ai-summary-output" class="text-sm mt-4 p-4 rounded-md border hidden" style="background-color: var(--bg-secondary); border-color: var(--border-color);"></div>
+                            </div>
+                            <div class="rounded-lg shadow-sm p-6" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-lg font-semibold" style="color: var(--text-primary);">✨ Market Pulse</h3>
+                                        <p class="text-sm" style="color: var(--text-secondary);">Get an AI summary of today's Indian market news.</p>
+                                    </div>
+                                    <button id="market-pulse-btn" class="btn-primary font-semibold py-2 px-4 rounded-md shadow-sm text-sm whitespace-nowrap">
+                                        <span class="btn-text">Get Today's Pulse</span>
+                                        <span class="spinner hidden"></span>
+                                    </button>
+                                </div>
+                                <div id="market-pulse-output" class="text-sm mt-4 p-4 rounded-md border hidden" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                                    <p id="market-pulse-text"></p>
+                                    <div id="market-pulse-sources" class="mt-4 text-xs"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Charts -->
+                        <div class="space-y-8">
+                            <div class="p-6 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <h3 class="font-semibold" style="color: var(--text-primary);">Account Balance</h3>
+                                <p class="text-sm" style="color: var(--text-secondary);">Capital Deployed and Account Value over time</p>
+                                <canvas id="accountBalanceChart"></canvas>
+                            </div>
+                             <div class="p-6 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <h3 class="font-semibold" style="color: var(--text-primary);">Monthly Performance</h3>
+                                <p class="text-sm" style="color: var(--text-secondary);">Your P&L broken down by month</p>
+                                <canvas id="monthlyPerformanceChart"></canvas>
+                            </div>
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <div class="p-6 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                    <h3 class="font-semibold mb-4" style="color: var(--text-primary);">Equity Curve</h3>
+                                    <canvas id="equityCurveChart"></canvas>
+                                </div>
+                                <div class="p-6 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                    <h3 class="font-semibold mb-4" style="color: var(--text-primary);">P&L by Segment</h3>
+                                    <canvas id="pnlBySegmentChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="p-6 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <h3 class="font-semibold mb-4" style="color: var(--text-primary);">Performance by Day of Week</h3>
+                                <canvas id="performanceByDayChart"></canvas>
+                            </div>
+                            <!-- ADDED: New Chart for Daily Win Rate -->
+                            <div class="p-6 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <h3 class="font-semibold mb-4" style="color: var(--text-primary);">Daily Win Rate vs Average Win Rate</h3>
+                                <canvas id="dailyWinRateChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add Trade Page -->
+                    <div id="add-trade" class="page">
+                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="lg:col-span-2">
+                                <form id="manual-trade-form">
+                                    <input type="hidden" id="trade-id" name="tradeId">
+                                    <div class="rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                        <div class="p-6 border-b" style="border-color: var(--border-color);">
+                                            <h3 id="trade-form-title" class="text-lg font-semibold" style="color: var(--text-primary);">Log a New Trade</h3>
+                                            <button type="button" id="clear-trade-form-btn" class="text-sm" style="color: var(--text-secondary);">Clear Form</button>
+                                        </div>
+                                        <div class="p-6 space-y-6">
+                                            <!-- Trade Details -->
+                                            <div>
+                                                <h4 class="font-semibold mb-2" style="color: var(--text-primary);">Trade Details</h4>
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div class="relative">
+                                                        <label for="asset-input" class="block text-sm" style="color: var(--text-secondary);">Asset/Instrument</label>
+                                                        <input name="asset" type="text" id="asset-input" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" placeholder="e.g., RELIANCE, NIFTY" required>
+                                                        <div id="asset-suggestions" class="absolute z-10 w-full rounded-md mt-1 hidden max-h-48 overflow-y-auto" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"></div>
+                                                    </div>
+                                                    <div><label for="segment" class="block text-sm" style="color: var(--text-secondary);">Segment</label><select name="segment" id="segment" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);"><option>Equity</option><option>F&O</option><option>Commodity</option><option>Currency</option></select></div>
+                                                    <div><label for="entry-date" class="block text-sm" style="color: var(--text-secondary);">Entry Date & Time</label><input name="entryDate" type="datetime-local" id="entry-date" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" required></div>
+                                                    <div><label for="exit-date" class="block text-sm" style="color: var(--text-secondary);">Exit Date & Time (Optional)</label><input name="exitDate" type="datetime-local" id="exit-date" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);"></div>
+                                                    <div><label for="direction" class="block text-sm" style="color: var(--text-secondary);">Direction</label><select name="direction" id="direction" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);"><option>Long</option><option>Short</option></select></div>
+                                                    <div><label for="trade-type" class="block text-sm" style="color: var(--text-secondary);">Type</label><select name="tradeType" id="trade-type" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);"><option>Intraday</option><option>Positional</option></select></div>
+                                                    <div><label for="entry-price" class="block text-sm" style="color: var(--text-secondary);">Entry Price</label><input name="entryPrice" type="number" step="any" id="entry-price" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" placeholder="0.00" required></div>
+                                                    <div><label for="exit-price" class="block text-sm" style="color: var(--text-secondary);">Exit Price (Optional)</label><input name="exitPrice" type="number" step="any" id="exit-price" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" placeholder="0.00"></div>
+                                                    <div><label for="quantity" class="block text-sm" style="color: var(--text-secondary);">Quantity / Lot Size</label><input name="quantity" type="number" id="quantity" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" placeholder="0" required></div>
+                                                    <div>
+                                                        <label for="brokerage" class="block text-sm" style="color: var(--text-secondary);">Brokerage (Optional)</label>
+                                                        <input name="brokerage" type="number" step="any" id="brokerage" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" placeholder="0.00">
+                                                    </div>
+                                                    <div>
+                                                        <label for="other-fees" class="block text-sm" style="color: var(--text-secondary);">Other Fees (Optional)</label>
+                                                        <input name="otherFees" type="number" step="any" id="other-fees" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" placeholder="0.00">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Risk & Plan -->
+                                            <div>
+                                                <h4 class="font-semibold mb-2" style="color: var(--text-primary);">Risk & Plan</h4>
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div><label for="stop-loss" class="block text-sm" style="color: var(--text-secondary);">Stop Loss (Optional)</label><input name="stopLoss" type="number" step="any" id="stop-loss" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" placeholder="0.00"></div>
+                                                    <div><label for="target" class="block text-sm" style="color: var(--text-secondary);">Target Price (Optional)</label><input name="target" type="number" step="any" id="target" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" placeholder="0.00"></div>
+                                                    <div><label for="strategy" class="block text-sm" style="color: var(--text-secondary);">Strategy Tag</label><select name="strategy" id="strategy" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);"><option>Price Action</option><option>Trend Following</option><option>Nifty Breakout</option><option>Other</option></select></div>
+                                                </div>
+                                            </div>
+                                            <!-- Qualitative Data -->
+                                            <div>
+                                                 <h4 class="font-semibold mb-2" style="color: var(--text-primary);">Qualitative Data</h4>
+                                                <div><label for="reasons" class="block text-sm" style="color: var(--text-secondary);">Reasons for Entry/Exit (Optional)</label><textarea name="reasons" id="reasons" rows="3" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);"></textarea></div>
+                                            </div>
+                                            <!-- AI Analysis -->
+                                            <div class="border-t pt-6" style="border-color: var(--border-color);">
+                                                <div class="flex justify-between items-start">
+                                                    <div>
+                                                        <h4 class="font-semibold mb-2" style="color: var(--text-primary);">✨ AI Trade Analysis</h4>
+                                                        <p class="text-sm" style="color: var(--text-secondary);">Get an objective critique of your trade plan before you save it.</p>
+                                                    </div>
+                                                    <button type="button" id="ai-trade-analysis-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md shadow-sm text-sm whitespace-nowrap">
+                                                        <span class="btn-text">Analyze Trade</span>
+                                                        <span class="spinner hidden"></span>
+                                                    </button>
+                                                </div>
+                                                <div id="ai-trade-analysis-output" class="text-sm mt-4 p-4 rounded-md border hidden" style="background-color: var(--bg-secondary); border-color: var(--border-color);"></div>
+                                            </div>
+                                        </div>
+                                        <div class="p-4 border-t flex justify-end" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                                            <button type="submit" class="btn-primary font-semibold py-2 px-6 rounded-md shadow-sm flex items-center justify-center min-w-[120px]">
+                                                <span class="btn-text">Save Trade</span>
+                                                <span class="spinner hidden"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                         </div>
+                    </div>
+
+                    <!-- Trade History Page (Enhanced) -->
+                    <div id="trade-history" class="page">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold" style="color: var(--text-primary);">Enhanced Trade Logs</h2>
+                            <p class="text-lg" style="color: var(--text-secondary);">Cleaner, sharper, and more insightful.</p>
+                        </div>
+                        <div class="rounded-lg shadow-sm overflow-x-auto" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                            <table class="w-full min-w-[1200px] text-sm text-left">
+                                <thead class="text-xs uppercase" style="background-color: var(--bg-secondary); color: var(--text-secondary);">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3">Symbol</th>
+                                        <th scope="col" class="px-6 py-3">Net P&L</th>
+                                        <th scope="col" class="px-6 py-3">Status</th>
+                                        <th scope="col" class="px-6 py-3">Entry Price</th>
+                                        <th scope="col" class="px-6 py-3">Type</th>
+                                        <th scope="col" class="px-6 py-3">Entry Date</th>
+                                        <th scope="col" class="px-6 py-3">Stop Loss</th>
+                                        <th scope="col" class="px-6 py-3">Quantity</th>
+                                        <th scope="col" class="px-6 py-3">Exit Price</th>
+                                        <th scope="col" class="px-6 py-3">Exit Date</th>
+                                        <th scope="col" class="px-6 py-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trade-history-tbody">
+                                    <!-- Dynamic content here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Reports Page -->
+                    <div id="reports" class="page">
+                        <div class="space-y-8">
+                             <div class="p-6 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                <h2 class="text-2xl font-bold mb-1" style="color: var(--text-primary);">Performance Metrics</h2>
+                                <p style="color: var(--text-secondary);" class="mb-6">Key stats for your trading performance.</p>
+                                <div id="reports-metrics-grid" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                                    <!-- Dynamic content here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trade Calendar Page -->
+                    <div id="trade-calendar" class="page">
+                         <div id="calendar-stats-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <!-- Dynamic content here -->
+                        </div>
+                        <div class="rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                            <div class="p-4 md:p-6 flex flex-col md:flex-row items-center justify-between gap-4" style="border-bottom: 1px solid var(--border-color);">
+                                <div class="flex items-center space-x-2 md:space-x-4">
+                                    <button id="prev-month-btn" class="p-2 rounded-full" style="background-color: var(--bg-tertiary); color: var(--text-primary);">
+                                        <i data-feather="chevron-left" class="h-6 w-6"></i>
+                                    </button>
+                                    <h2 id="calendar-month-year" class="text-xl font-bold whitespace-nowrap" style="color: var(--text-primary);">Month Year</h2>
+                                    <button id="next-month-btn" class="p-2 rounded-full" style="background-color: var(--bg-tertiary); color: var(--text-primary);">
+                                        <i data-feather="chevron-right" class="h-6 w-6"></i>
+                                    </button>
+                                </div>
+                                <div id="monthly-pnl-display" class="font-semibold" style="color: var(--text-primary);">Monthly P&L: ₹0.00</div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <div class="min-w-[800px]">
+                                    <div class="grid grid-cols-8 text-center text-xs font-semibold" style="color: var(--text-secondary); border-bottom: 1px solid var(--border-color);">
+                                        <div class="py-2" style="border-right: 1px solid var(--border-color);">Sun</div>
+                                        <div class="py-2" style="border-right: 1px solid var(--border-color);">Mon</div>
+                                        <div class="py-2" style="border-right: 1px solid var(--border-color);">Tue</div>
+                                        <div class="py-2" style="border-right: 1px solid var(--border-color);">Wed</div>
+                                        <div class="py-2" style="border-right: 1px solid var(--border-color);">Thu</div>
+                                        <div class="py-2" style="border-right: 1px solid var(--border-color);">Fri</div>
+                                        <div class="py-2" style="border-right: 1px solid var(--border-color);">Sat</div>
+                                        <div class="py-2">Total</div>
+                                    </div>
+                                    <div id="calendar-grid" class="grid grid-cols-8">
+                                        <!-- Calendar days generated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fund Management Page -->
+                    <div id="fund-management" class="page">
+                         <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                            <h2 class="text-3xl font-bold" style="color: var(--text-primary);">Funds</h2>
+                            <div class="flex items-center space-x-2">
+                                <button id="fm-deposit-btn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm text-sm flex items-center">
+                                    <i data-feather="plus" class="mr-2 h-4 w-4"></i> Deposit
+                                </button>
+                                <button id="fm-withdraw-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md shadow-sm text-sm flex items-center">
+                                     <i data-feather="arrow-up-right" class="mr-2 h-4 w-4"></i> Withdraw
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Stat Cards -->
+                        <div id="fm-stats-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                           <!-- Dynamic Content Here -->
+                        </div>
+
+                        <!-- Ledger Table -->
+                        <div class="rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="text-xs uppercase" style="background-color: var(--bg-secondary); color: var(--text-secondary);">
+                                        <tr>
+                                            <th class="px-6 py-3 font-medium">Date</th>
+                                            <th class="px-6 py-3 font-medium">Type</th>
+                                            <th class="px-6 py-3 font-medium">Amount</th>
+                                            <th class="px-6 py-3 font-medium">Notes</th>
+                                            <th class="px-6 py-3 font-medium">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fund-ledger-body">
+                                        <!-- Dynamic content here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trade Statement Page -->
+                    <div id="trade-statement" class="page">
+                         <!-- Filter Section -->
+                        <div class="rounded-lg shadow-sm p-4 mb-6" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+                                <div>
+                                    <label for="filter-type" class="block text-sm font-medium" style="color: var(--text-secondary);">Transaction Type</label>
+                                    <select id="filter-type" class="w-full rounded-md text-sm border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                        <option>All Types</option>
+                                        <option>Trade</option>
+                                        <option>Deposit</option>
+                                        <option>Withdrawal</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filter-strategy" class="block text-sm font-medium" style="color: var(--text-secondary);">Strategy</label>
+                                    <select id="filter-strategy" class="w-full rounded-md text-sm border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                        <option>All Strategies</option>
+                                        <option>Nifty Breakout</option>
+                                        <option>Price Action</option>
+                                        <option>Trend Following</option>
+                                        <option>Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="filter-start-date" class="block text-sm font-medium" style="color: var(--text-secondary);">Start Date</label>
+                                    <input type="date" id="filter-start-date" class="w-full rounded-md text-sm border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                </div>
+                                <div>
+                                    <label for="filter-end-date" class="block text-sm font-medium" style="color: var(--text-secondary);">End Date</label>
+                                    <input type="date" id="filter-end-date" class="w-full rounded-md text-sm border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                </div>
+                                <button id="apply-filter-btn" class="btn-primary font-semibold py-2 px-4 rounded-md shadow-sm w-full h-fit">Apply</button>
+                                <button id="reset-filter-btn" class="font-semibold py-2 px-4 rounded-md shadow-sm w-full h-fit" style="background-color: var(--bg-tertiary); color: var(--text-secondary);">Reset</button>
+                            </div>
+                        </div>
+
+                        <div class="rounded-lg shadow-sm overflow-x-auto" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                            <table class="w-full min-w-[1200px] text-sm text-left">
+                                <thead class="text-xs uppercase" style="background-color: var(--bg-secondary); color: var(--text-secondary);">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3">Date</th>
+                                        <th scope="col" class="px-6 py-3">Type</th>
+                                        <th scope="col" class="px-6 py-3">Symbol/Desc</th>
+                                        <th scope="col" class="px-6 py-3">Strategy</th>
+                                        <th scope="col" class="px-6 py-3">Gross P/L</th>
+                                        <th scope="col" class="px-6 py-3">Charges</th>
+                                        <th scope="col" class="px-6 py-3">Net P/L</th>
+                                        <th scope="col" class="px-6 py-3">Amount (₹)</th>
+                                        <th scope="col" class="px-6 py-3">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="statement-tbody">
+                                    <!-- Dynamic content here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Profile Page -->
+                    <div id="profile" class="page">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div class="lg:col-span-2 space-y-8">
+                                <div class="rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                    <div class="p-6">
+                                        <h3 class="text-xl font-bold mb-6" style="color: var(--text-primary);">Profile Information</h3>
+                                        <form id="profile-info-form" class="space-y-6">
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label class="block text-sm font-medium" style="color: var(--text-secondary);">Full Name</label>
+                                                    <input type="text" id="profile-name" name="name" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-sm font-medium" style="color: var(--text-secondary);">Email Address</label>
+                                                    <input type="email" id="profile-email" class="mt-1 w-full rounded-md" style="background-color: var(--bg-tertiary);" disabled>
+                                                </div>
+                                                <div>
+                                                    <label class="block text-sm font-medium" style="color: var(--text-secondary);">Contact Number</label>
+                                                    <input type="tel" id="profile-phone" name="phone" placeholder="+91 XXXXX XXXXX" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                                </div>
+                                                <div>
+                                                    <label class="block text-sm font-medium" style="color: var(--text-secondary);">City</label>
+                                                    <input type="text" id="profile-city" name="city" placeholder="e.g. Mumbai" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <button type="submit" class="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-6 rounded-md shadow-sm flex items-center justify-center min-w-[150px]">
+                                                    <span class="btn-text">Save Changes</span>
+                                                    <span class="spinner hidden"></span>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                 <div class="rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                    <div class="p-6">
+                                        <h3 class="text-xl font-bold mb-6" style="color: var(--text-primary);">Change Password</h3>
+                                        <form id="change-password-form" class="space-y-6">
+                                            <div>
+                                                <label class="block text-sm font-medium" style="color: var(--text-secondary);">Current Password</label>
+                                                <input type="password" id="current-password" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                            </div>
+                                             <div>
+                                                <label class="block text-sm font-medium" style="color: var(--text-secondary);">New Password</label>
+                                                <input type="password" id="new-password" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                            </div>
+                                             <div>
+                                                <label class="block text-sm font-medium" style="color: var(--text-secondary);">Confirm New Password</label>
+                                                <input type="password" id="confirm-new-password" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);">
+                                            </div>
+                                            <div>
+                                                <button type="submit" class="btn-primary font-semibold py-2 px-6 rounded-md shadow-sm flex items-center justify-center min-w-[180px]">
+                                                     <span class="btn-text">Update Password</span>
+                                                     <span class="spinner hidden"></span>
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-1 space-y-8">
+                                <div class="rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+                                    <div class="p-6">
+                                        <h3 class="text-xl font-bold mb-4" style="color: var(--text-primary);">Account</h3>
+                                        <div class="space-y-3">
+                                            <p class="text-sm" style="color: var(--text-secondary);">Member Since</p>
+                                            <p id="profile-member-since" class="font-semibold"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <!-- Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+    </div>
+
+    <!-- Modals -->
+    <div id="transaction-modal" class="modal-overlay hidden">
+        <div class="w-full max-w-md m-4 rounded-lg shadow-xl" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);">
+             <form id="transaction-form">
+                <input type="hidden" id="ledger-id" name="ledgerId">
+                <div class="p-6 border-b flex justify-between items-center" style="border-color: var(--border-color);">
+                    <h3 id="transaction-modal-title" class="text-xl font-semibold" style="color: var(--text-primary);">Deposit Funds</h3>
+                    <button type="button" class="close-modal-btn p-1 rounded-full hover:bg-slate-200" style="color: var(--text-primary);">
+                        <i data-feather="x" class="h-5 w-5"></i>
+                    </button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label for="transaction-amount" class="block text-sm font-medium" style="color: var(--text-secondary);">Amount (₹)</label>
+                        <input type="number" step="0.01" id="transaction-amount" class="mt-1 block w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" placeholder="0.00" required>
+                    </div>
+                     <div>
+                        <label for="transaction-date" class="block text-sm font-medium" style="color: var(--text-secondary);">Date</label>
+                        <input type="date" id="transaction-date" class="mt-1 block w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);" required>
+                    </div>
+                     <div>
+                        <label for="transaction-notes" class="block text-sm font-medium" style="color: var(--text-secondary);">Notes (Optional)</label>
+                        <textarea id="transaction-notes" rows="2" class="mt-1 w-full rounded-md border focus:border-blue-500 focus:ring-blue-500" style="background-color: var(--bg-primary); color: var(--text-primary); border-color: var(--border-color);"></textarea>
+                    </div>
+                </div>
+                <div class="p-4 border-t flex justify-end items-center space-x-3" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                    <button type="button" class="close-modal-btn border font-semibold py-2 px-4 rounded-md shadow-sm hover:bg-slate-50" style="background-color: var(--bg-primary); border-color: var(--border-color); color: var(--text-primary);">Cancel</button>
+                    <button type="submit" id="transaction-submit-btn" class="btn-primary font-semibold py-2 px-6 rounded-md shadow-sm flex items-center justify-center min-w-[140px]">
+                        <span class="btn-text">Add Deposit</span>
+                        <span class="spinner hidden"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+        
+    <!-- Scroll to Top Button -->
+    <button id="scroll-to-top-btn" class="hidden fixed bottom-8 right-8 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 z-20">
+        <i data-feather="arrow-up" class="h-6 w-6"></i>
+    </button>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signInWithCustomToken,
+            signInAnonymously,
+            updateProfile,
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore,
+            setDoc,
+            doc,
+            addDoc,
+            getDoc,
+            updateDoc,
+            deleteDoc,
+            collection,
+            query,
+            where,
+            onSnapshot,
+            serverTimestamp,
+            orderBy,
+            writeBatch
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        const appId = typeof __app_id !== 'undefined' ? __app_id.replace(/[\/.]/g, '_') : 'default-app-id';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- GLOBAL APP STATE ---
+        const appState = {
+            theme: localStorage.getItem('theme') || 'light',
+            calendarDate: new Date(),
+            user: null,
+            trades: [],
+            ledger: [],
+            unsubscribeTrades: () => {},
+            unsubscribeLedger: () => {},
+            unsubscribeProfile: () => {},
+        };
+
+        // --- UI ELEMENTS ---
+        const appContainer = document.getElementById('app-container');
+        const mainContent = document.getElementById('main-content');
+        const pageTitle = document.getElementById('page-title');
+        const themeToggleInput = document.getElementById('theme-toggle-input');
+        const sidebar = document.getElementById('sidebar');
+        const menuToggleBtn = document.getElementById('menu-toggle-btn');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        
+        // --- UTILITY FUNCTIONS ---
+        const showToast = (message, type = 'info') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            let icon = '';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'error') icon = 'alert-circle';
+            if (type === 'info') icon = 'info';
+
+            toast.innerHTML = `<i data-feather="${icon}" class="h-5 w-5"></i><span>${message}</span>`;
+            
+            container.appendChild(toast);
+            feather.replace();
+
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        };
+
+        const toggleSpinner = (button, show) => {
+            const spinner = button.querySelector('.spinner');
+            const btnText = button.querySelector('.btn-text');
+            if (spinner && btnText) {
+                spinner.classList.toggle('hidden', !show);
+                btnText.classList.toggle('hidden', show);
+            }
+            button.disabled = show;
+        };
+        
+        const formatCurrency = (value) => {
+             return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value || 0);
+        };
+        const formatDate = (date, includeTime = false) => {
+            if (!date) return '-';
+            const d = date.toDate ? date.toDate() : new Date(date);
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            if (includeTime) {
+                options.hour = '2-digit';
+                options.minute = '2-digit';
+            }
+            return d.toLocaleDateString('en-GB', options);
+        };
+        
+        const calculateNetPnl = (trade) => {
+            if (!trade.exitPrice || !trade.exitDate) return 0;
+            const grossPnl = (trade.exitPrice - trade.entryPrice) * trade.quantity * (trade.direction === 'Short' ? -1 : 1);
+            const brokerage = trade.brokerage || 0;
+            const otherFees = trade.otherFees || 0;
+            return grossPnl - brokerage - otherFees;
+        };
+
+        // --- THEME MANAGEMENT ---
+        const applyTheme = () => {
+            const isDark = appState.theme === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            
+            // Check if the theme toggle exists before trying to set its state
+            if (themeToggleInput) {
+                themeToggleInput.checked = isDark;
+            }
+
+            // Only render charts if a user is logged in
+            if (appState.user) {
+                renderAllCharts();
+            }
+        };
+
+        // Ensure the theme toggle exists before adding a listener
+        if (themeToggleInput) {
+            themeToggleInput.addEventListener('change', () => {
+                appState.theme = themeToggleInput.checked ? 'dark' : 'light';
+                localStorage.setItem('theme', appState.theme);
+                applyTheme();
+            });
+        }
+        
+        // --- SIDEBAR TOGGLE FOR MOBILE ---
+        const toggleSidebar = () => {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebarOverlay.classList.toggle('hidden');
+        };
+
+        menuToggleBtn?.addEventListener('click', toggleSidebar);
+        sidebarOverlay?.addEventListener('click', toggleSidebar);
+
+        document.querySelectorAll('#sidebar .nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth < 768) { // md breakpoint
+                    toggleSidebar();
+                }
+            });
+        });
+
+
+        // --- AUTHENTICATION ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                appState.user = user;
+                appContainer.classList.remove('hidden');
+                document.getElementById('user-display-name').textContent = user.displayName || 'Guest';
+                
+                appState.unsubscribeTrades();
+                appState.unsubscribeLedger();
+                appState.unsubscribeProfile();
+
+                setupFirestoreListeners();
+                
+                navigateTo('dashboard');
+                applyTheme(); // Apply theme after user is authenticated and UI is ready
+            } else {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        const userCredential = await signInAnonymously(auth);
+                        const newUser = userCredential.user;
+                        const profileRef = doc(db, `artifacts/${appId}/users/${newUser.uid}/profile`, 'info');
+                        const profileSnap = await getDoc(profileRef);
+                        if (!profileSnap.exists()) {
+                             await setDoc(profileRef, {
+                                name: 'Guest User',
+                                email: `guest_${newUser.uid.substring(0,5)}@example.com`,
+                                createdAt: serverTimestamp(),
+                            });
+                            await updateProfile(newUser, { displayName: "Guest User" });
+                        }
+                    }
+                } catch (error) {
+                    console.error("Automatic sign-in failed:", error);
+                    showToast("Could not start the application.", "error");
+                }
+            }
+        });
+
+        const setupFirestoreListeners = () => {
+            if (!appState.user) return;
+            const userId = appState.user.uid;
+            
+            // --- Trades Listener ---
+            const tradesRef = collection(db, `artifacts/${appId}/users/${userId}/trades`);
+            const qTrades = query(tradesRef, orderBy("entryDate", "desc"));
+            appState.unsubscribeTrades = onSnapshot(qTrades, (snapshot) => {
+                appState.trades = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateAllUI();
+            }, (error) => {
+                console.error("Error fetching trades:", error);
+                showToast("Could not fetch trades.", "error");
+            });
+
+            // --- Ledger Listener ---
+            const ledgerRef = collection(db, `artifacts/${appId}/users/${userId}/ledger`);
+            const qLedger = query(ledgerRef, orderBy("date", "desc"));
+            appState.unsubscribeLedger = onSnapshot(qLedger, (snapshot) => {
+                appState.ledger = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                 updateAllUI();
+            }, (error) => {
+                console.error("Error fetching ledger:", error);
+                showToast("Could not fetch fund data.", "error");
+            });
+            
+             // --- Profile Listener ---
+            const profileRef = doc(db, `artifacts/${appId}/users/${userId}/profile`, 'info');
+            appState.unsubscribeProfile = onSnapshot(profileRef, (doc) => {
+                if (doc.exists()) {
+                    renderProfilePage(doc.data());
+                }
+            });
+        };
+        
+        const updateAllUI = () => {
+            renderDashboard();
+            renderTradeHistory();
+            renderFundManagement();
+            renderCalendar();
+            renderReports();
+            renderStatement();
+        };
+
+        document.querySelectorAll('.logout-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await signOut(auth);
+                // After signing out, onAuthStateChanged will handle re-authentication automatically.
+                showToast("Session has been reset.", "info");
+            });
+        });
+
+        // --- PAGE NAVIGATION ---
+        const pages = document.querySelectorAll('.page');
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        const navigateTo = (pageId) => {
+            pages.forEach(p => p.classList.remove('active'));
+            const newPage = document.getElementById(pageId);
+            if (newPage) newPage.classList.add('active');
+            mainContent.scrollTo(0, 0); 
+
+            navItems.forEach(item => item.classList.remove('active'));
+            const activeNavItem = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+            if(activeNavItem) {
+                activeNavItem.classList.add('active');
+                pageTitle.textContent = activeNavItem.querySelector('span').textContent.trim();
+            }
+            if (pageId === 'add-trade') {
+                clearTradeForm();
+            }
+        };
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo(item.dataset.page);
+            });
+        });
+
+        // --- DASHBOARD RENDERING ---
+        const renderDashboard = () => {
+            const { trades, ledger } = appState;
+            const closedTrades = trades.filter(t => t.exitPrice && t.exitDate);
+
+            let netPnl = 0;
+            let grossProfit = 0;
+            let grossLoss = 0;
+            let wins = 0;
+            let losses = 0;
+            
+            closedTrades.forEach(trade => {
+                const pnl = calculateNetPnl(trade);
+                netPnl += pnl;
+                if (pnl > 0) {
+                    wins++;
+                    grossProfit += pnl;
+                } else {
+                    losses++;
+                    grossLoss += Math.abs(pnl);
+                }
+            });
+
+            const totalTrades = closedTrades.length;
+            const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+            const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : 0;
+            const avgWin = wins > 0 ? grossProfit / wins : 0;
+            const avgLoss = losses > 0 ? grossLoss / losses : 0;
+            const avgWinLossRatio = avgLoss > 0 ? avgWin / avgLoss : 0;
+
+            document.getElementById('db-net-pnl').textContent = formatCurrency(netPnl);
+            document.getElementById('db-net-pnl').className = `text-2xl font-bold mt-2 ${netPnl >= 0 ? 'text-green-500' : 'text-red-500'}`;
+            document.getElementById('db-total-trades').textContent = `${totalTrades} trades`;
+            document.getElementById('db-win-rate').textContent = `${winRate.toFixed(1)}%`;
+            document.getElementById('db-won-trades').textContent = `${wins} won`;
+            document.getElementById('db-lost-trades').textContent = `${losses} lost`;
+            document.getElementById('db-profit-factor').textContent = profitFactor.toFixed(2);
+            document.getElementById('db-avg-win-loss').textContent = avgWinLossRatio.toFixed(2);
+            document.getElementById('db-avg-win').textContent = `+${formatCurrency(avgWin)}`;
+            document.getElementById('db-avg-loss').textContent = `-${formatCurrency(avgLoss)}`;
+            
+            // Account Summary
+            const deposits = ledger.filter(l => l.type === 'Deposit').reduce((sum, l) => sum + l.amount, 0);
+            const withdrawals = ledger.filter(l => l.type === 'Withdrawal').reduce((sum, l) => sum + l.amount, 0);
+            const openTrades = trades.filter(t => !t.exitDate);
+            const deployedCapital = openTrades.reduce((sum, t) => sum + (t.entryPrice * t.quantity), 0);
+            const accountValue = deposits - withdrawals + netPnl;
+            const availableCash = accountValue - deployedCapital;
+
+            const summaryEl = document.getElementById('db-account-summary');
+            const summaryTextClasses = "text-2xl font-bold";
+            summaryEl.innerHTML = `
+                <div><p class="text-sm" style="color: var(--text-secondary);">NET ACCOUNT VALUE</p><p class="${summaryTextClasses} ${accountValue >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(accountValue)}</p></div>
+                <div><p class="text-sm" style="color: var(--text-secondary);">NET REALIZED P&L</p><p class="${summaryTextClasses} ${netPnl >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(netPnl)}</p></div>
+                <div><p class="text-sm" style="color: var(--text-secondary);">AVAILABLE CASH</p><p class="${summaryTextClasses}">${formatCurrency(availableCash)}</p></div>
+                <div><p class="text-sm" style="color: var(--text-secondary);">DEPLOYED CAPITAL</p><p class="${summaryTextClasses}">${formatCurrency(deployedCapital)}</p></div>
+                <div><p class="text-sm" style="color: var(--text-secondary);">TOTAL DEPOSITS</p><p class="${summaryTextClasses}">${formatCurrency(deposits)}</p></div>
+                <div><p class="text-sm" style="color: var(--text-secondary);">TOTAL WITHDRAWN</p><p class="${summaryTextClasses}">${formatCurrency(withdrawals)}</p></div>
+                <div><p class="text-sm" style="color: var(--text-secondary);">STARTING BALANCE</p><p class="${summaryTextClasses}">₹0.00</p></div>
+            `;
+            
+            renderAllCharts();
+        };
+        
+        // --- TRADE MANAGEMENT ---
+        const tradeForm = document.getElementById('manual-trade-form');
+        
+        const clearTradeForm = () => {
+             tradeForm.reset();
+             document.getElementById('trade-id').value = '';
+             document.getElementById('trade-form-title').textContent = 'Log a New Trade';
+             document.getElementById('ai-trade-analysis-output').classList.add('hidden');
+        };
+
+        document.getElementById('asset-input').addEventListener('input', async (e) => {
+            const query = e.target.value;
+            const suggestionsEl = document.getElementById('asset-suggestions');
+            if (query.length < 2) {
+                suggestionsEl.classList.add('hidden');
+                return;
+            }
+
+            // A mock asset suggestion list since we don't have a real API
+            const allAssets = ["RELIANCE", "NIFTY", "HDFC", "INFY", "TCS", "ITC", "SBI", "ICICI"];
+            const suggestions = allAssets.filter(asset => asset.toLowerCase().includes(query.toLowerCase()));
+
+            if (suggestions.length > 0) {
+                suggestionsEl.innerHTML = suggestions.map(s => `<div class="p-2 cursor-pointer" style="color: var(--text-primary); background-color: var(--bg-primary);">${s}</div>`).join('');
+                suggestionsEl.classList.remove('hidden');
+            } else {
+                suggestionsEl.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('asset-suggestions').addEventListener('click', (e) => {
+            const assetInput = document.getElementById('asset-input');
+            assetInput.value = e.target.textContent;
+            document.getElementById('asset-suggestions').classList.add('hidden');
+        });
+
+
+        tradeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!appState.user) {
+                showToast("You must be logged in.", "error");
+                return;
+            }
+
+            const button = e.target.querySelector('button[type="submit"]');
+            toggleSpinner(button, true);
+
+            const tradeId = document.getElementById('trade-id').value;
+            
+            const tradeData = {
+                asset: document.getElementById('asset-input').value,
+                segment: document.getElementById('segment').value,
+                entryDate: new Date(document.getElementById('entry-date').value),
+                exitDate: document.getElementById('exit-date').value ? new Date(document.getElementById('exit-date').value) : null,
+                direction: document.getElementById('direction').value,
+                tradeType: document.getElementById('trade-type').value,
+                entryPrice: parseFloat(document.getElementById('entry-price').value),
+                exitPrice: document.getElementById('exit-price').value ? parseFloat(document.getElementById('exit-price').value) : null,
+                quantity: parseInt(document.getElementById('quantity').value, 10),
+                brokerage: document.getElementById('brokerage').value ? parseFloat(document.getElementById('brokerage').value) : 0,
+                otherFees: document.getElementById('other-fees').value ? parseFloat(document.getElementById('other-fees').value) : 0,
+                stopLoss: document.getElementById('stop-loss').value ? parseFloat(document.getElementById('stop-loss').value) : null,
+                target: document.getElementById('target').value ? parseFloat(document.getElementById('target').value) : null,
+                strategy: document.getElementById('strategy').value,
+                reasons: document.getElementById('reasons').value,
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                const userId = appState.user.uid;
+                if (tradeId) {
+                    // Update existing trade
+                    const tradeRef = doc(db, `artifacts/${appId}/users/${userId}/trades`, tradeId);
+                    await updateDoc(tradeRef, tradeData);
+                    showToast("Trade updated successfully!", "success");
+                } else {
+                    // Add new trade
+                    tradeData.createdAt = serverTimestamp();
+                    const tradesRef = collection(db, `artifacts/${appId}/users/${userId}/trades`);
+                    await addDoc(tradesRef, tradeData);
+                    showToast("Trade added successfully!", "success");
+                }
+                clearTradeForm();
+                navigateTo('trade-history');
+            } catch (error) {
+                console.error("Error saving trade:", error);
+                showToast(`Error saving trade: ${error.message}`, "error");
+            } finally {
+                toggleSpinner(button, false);
+            }
+        });
+        
+        document.getElementById('clear-trade-form-btn').addEventListener('click', clearTradeForm);
+
+        const renderTradeHistory = () => {
+            const tbody = document.getElementById('trade-history-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            if (appState.trades.length === 0) {
+                 tbody.innerHTML = `<tr><td colspan="11" class="text-center p-8" style="color: var(--text-muted);">No trades logged yet.</td></tr>`;
+                 return;
+            }
+
+            appState.trades.forEach(trade => {
+                const isClosed = trade.exitPrice && trade.exitDate;
+                const pnl = isClosed ? calculateNetPnl(trade) : 0;
+                const status = isClosed ? 'Closed' : 'Open';
+                const statusColor = isClosed ? 'gray' : 'yellow';
+
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid var(--border-color)';
+                row.innerHTML = `
+                    <td class="px-6 py-4 font-semibold whitespace-nowrap">${trade.asset}</td>
+                    <td class="px-6 py-4 font-semibold ${pnl > 0 ? 'text-green-500' : pnl < 0 ? 'text-red-500' : ''}">${isClosed ? formatCurrency(pnl) : '-'}</td>
+                    <td class="px-6 py-4"><span class="bg-${statusColor}-100 text-${statusColor}-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${status}</span></td>
+                    <td class="px-6 py-4">${formatCurrency(trade.entryPrice)}</td>
+                    <td class="px-6 py-4">${trade.direction}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(trade.entryDate)}</td>
+                    <td class="px-6 py-4 text-red-500">${trade.stopLoss ? formatCurrency(trade.stopLoss) : '-'}</td>
+                    <td class="px-6 py-4">${trade.quantity}</td>
+                    <td class="px-6 py-4">${trade.exitPrice ? formatCurrency(trade.exitPrice) : '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(trade.exitDate)}</td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center space-x-2">
+                            <button data-action="edit" data-id="${trade.id}" class="p-1 rounded-full hover:bg-slate-200" style="color: var(--text-primary);"><i data-feather="edit-2" class="h-4 w-4 pointer-events-none"></i></button>
+                            <button data-action="delete" data-id="${trade.id}" class="p-1 rounded-full hover:bg-slate-200" style="color: var(--text-primary);"><i data-feather="trash-2" class="h-4 w-4 pointer-events-none text-red-500"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            feather.replace();
+        };
+
+        document.getElementById('trade-history-tbody').addEventListener('click', async (e) => {
+             const button = e.target.closest('button');
+             if (!button || !appState.user) return;
+             
+             const action = button.dataset.action;
+             const tradeId = button.dataset.id;
+             const userId = appState.user.uid;
+             
+             if (action === 'edit') {
+                 const trade = appState.trades.find(t => t.id === tradeId);
+                 if (trade) {
+                     document.getElementById('trade-id').value = trade.id;
+                     document.getElementById('asset-input').value = trade.asset;
+                     document.getElementById('segment').value = trade.segment;
+                     document.getElementById('entry-date').value = trade.entryDate.toDate().toISOString().slice(0, 16);
+                     document.getElementById('exit-date').value = trade.exitDate ? trade.exitDate.toDate().toISOString().slice(0, 16) : '';
+                     document.getElementById('direction').value = trade.direction;
+                     document.getElementById('trade-type').value = trade.tradeType;
+                     document.getElementById('entry-price').value = trade.entryPrice;
+                     document.getElementById('exit-price').value = trade.exitPrice || '';
+                     document.getElementById('quantity').value = trade.quantity;
+                     document.getElementById('brokerage').value = trade.brokerage || '';
+                     document.getElementById('other-fees').value = trade.otherFees || '';
+                     document.getElementById('stop-loss').value = trade.stopLoss || '';
+                     document.getElementById('target').value = trade.target || '';
+                     document.getElementById('strategy').value = trade.strategy;
+                     document.getElementById('reasons').value = trade.reasons || '';
+                     
+                     document.getElementById('trade-form-title').textContent = `Editing Trade: ${trade.asset}`;
+                     navigateTo('add-trade');
+                 }
+             } else if (action === 'delete') {
+                // Using a custom modal/dialog is better than `confirm()`.
+                if (window.confirm('Are you sure you want to delete this trade? This action cannot be undone.')) {
+                    try {
+                        const tradeRef = doc(db, `artifacts/${appId}/users/${userId}/trades`, tradeId);
+                        await deleteDoc(tradeRef);
+                        showToast("Trade deleted successfully.", "success");
+                    } catch (error) {
+                        console.error("Error deleting trade:", error);
+                        showToast("Failed to delete trade.", "error");
+                    }
+                }
+             }
+        });
+
+        // --- FUND MANAGEMENT ---
+        const transactionModal = document.getElementById('transaction-modal');
+        const transactionForm = document.getElementById('transaction-form');
+
+        const openTransactionModal = (type, ledgerEntry = null) => {
+            transactionForm.reset();
+            const title = document.getElementById('transaction-modal-title');
+            const submitBtn = document.getElementById('transaction-submit-btn');
+            document.getElementById('ledger-id').value = ledgerEntry ? ledgerEntry.id : '';
+
+            if (type === 'Deposit') {
+                title.textContent = 'Deposit Funds';
+                submitBtn.querySelector('.btn-text').textContent = 'Add Deposit';
+            } else {
+                title.textContent = 'Withdraw Funds';
+                submitBtn.querySelector('.btn-text').textContent = 'Add Withdrawal';
+            }
+
+            if(ledgerEntry) {
+                document.getElementById('transaction-amount').value = ledgerEntry.amount;
+                document.getElementById('transaction-date').valueAsDate = ledgerEntry.date.toDate();
+                document.getElementById('transaction-notes').value = ledgerEntry.notes;
+            } else {
+                 document.getElementById('transaction-date').valueAsDate = new Date();
+            }
+
+            transactionModal.dataset.type = type;
+            transactionModal.classList.remove('hidden');
+        };
+
+        document.getElementById('fm-deposit-btn')?.addEventListener('click', () => openTransactionModal('Deposit'));
+        document.getElementById('fm-withdraw-btn')?.addEventListener('click', () => openTransactionModal('Withdrawal'));
+
+        document.querySelectorAll('.close-modal-btn').forEach(btn => {
+            btn.addEventListener('click', () => btn.closest('.modal-overlay').classList.add('hidden'));
+        });
+        
+        transactionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!appState.user) {
+                showToast("You must be logged in.", "error");
+                return;
+            }
+            
+            const button = e.target.querySelector('button[type="submit"]');
+            toggleSpinner(button, true);
+
+            const ledgerId = document.getElementById('ledger-id').value;
+            const data = {
+                type: transactionModal.dataset.type,
+                amount: parseFloat(document.getElementById('transaction-amount').value),
+                date: new Date(document.getElementById('transaction-date').value),
+                notes: document.getElementById('transaction-notes').value,
+                updatedAt: serverTimestamp()
+            };
+
+            try {
+                const userId = appState.user.uid;
+                if (ledgerId) {
+                    const docRef = doc(db, `artifacts/${appId}/users/${userId}/ledger`, ledgerId);
+                    await updateDoc(docRef, data);
+                    showToast("Transaction updated successfully!", "success");
+                } else {
+                    data.createdAt = serverTimestamp();
+                    const collectionRef = collection(db, `artifacts/${appId}/users/${userId}/ledger`);
+                    await addDoc(collectionRef, data);
+                    showToast(`${data.type} added successfully!`, "success");
+                }
+                transactionModal.classList.add('hidden');
+            } catch(error) {
+                console.error("Error saving transaction: ", error);
+                showToast("Failed to save transaction.", "error");
+            } finally {
+                toggleSpinner(button, false);
+            }
+        });
+
+        const renderFundManagement = () => {
+             const { ledger, trades } = appState;
+             const deposits = ledger.filter(l => l.type === 'Deposit').reduce((sum, l) => sum + l.amount, 0);
+             const withdrawals = ledger.filter(l => l.type === 'Withdrawal').reduce((sum, l) => sum + l.amount, 0);
+             const netPnl = trades.filter(t => t.exitPrice).reduce((sum, t) => sum + calculateNetPnl(t), 0);
+
+            const accountValue = deposits - withdrawals + netPnl;
+            const deployedCapital = trades.filter(t => !t.exitDate).reduce((sum, t) => sum + (t.entryPrice * t.quantity), 0);
+            const availableCash = accountValue - deployedCapital;
+
+            const statsGrid = document.getElementById('fm-stats-grid');
+            const statTextClasses = "text-2xl font-bold mt-2";
+            statsGrid.innerHTML = `
+                <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"><h3 class="text-sm font-medium" style="color: var(--text-secondary);">Net Account Value</h3><p class="${statTextClasses} ${accountValue >=0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(accountValue)}</p></div>
+                <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"><h3 class="text-sm font-medium" style="color: var(--text-secondary);">Net Realised P&L</h3><p class="${statTextClasses} ${netPnl >=0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(netPnl)}</p></div>
+                <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"><h3 class="text-sm font-medium" style="color: var(--text-secondary);">Total Deposits</h3><p class="${statTextClasses}">${formatCurrency(deposits)}</p></div>
+                <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"><h3 class="text-sm font-medium" style="color: var(--text-secondary);">Total Withdrawn</h3><p class="${statTextClasses}">${formatCurrency(withdrawals)}</p></div>
+                <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"><h3 class="text-sm font-medium" style="color: var(--text-secondary);">Deployed Capital</h3><p class="${statTextClasses}">${formatCurrency(deployedCapital)}</p></div>
+                <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"><h3 class="text-sm font-medium" style="color: var(--text-secondary);">Available Cash</h3><p class="${statTextClasses}">${formatCurrency(availableCash)}</p></div>
+            `;
+            
+            const tbody = document.getElementById('fund-ledger-body');
+            tbody.innerHTML = '';
+            if (ledger.length === 0) {
+                 tbody.innerHTML = `<tr><td colspan="5" class="text-center p-8" style="color: var(--text-muted);">No transactions yet.</td></tr>`;
+                 return;
+            }
+            ledger.forEach(entry => {
+                const isDeposit = entry.type === 'Deposit';
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid var(--border-color)';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(entry.date)}</td>
+                    <td class="px-6 py-4"><span class="text-xs font-medium px-2.5 py-0.5 rounded-full ${isDeposit ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${entry.type}</span></td>
+                    <td class="px-6 py-4 font-semibold ${isDeposit ? 'text-green-500' : 'text-red-500'}">${formatCurrency(entry.amount)}</td>
+                    <td class="px-6 py-4 text-xs">${entry.notes || '-'}</td>
+                    <td class="px-6 py-4 flex items-center space-x-2">
+                        <button data-action="edit" data-id="${entry.id}" class="p-1 hover:text-blue-500" style="color: var(--text-primary);"><i data-feather="edit-2" class="h-4 w-4 pointer-events-none"></i></button>
+                        <button data-action="delete" data-id="${entry.id}" class="p-1 hover:text-red-500" style="color: var(--text-primary);"><i data-feather="trash-2" class="h-4 w-4 pointer-events-none"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            feather.replace();
+        };
+
+        document.getElementById('fund-ledger-body').addEventListener('click', async (e) => {
+            const button = e.target.closest('button');
+            if (!button || !appState.user) return;
+            
+            const action = button.dataset.action;
+            const ledgerId = button.dataset.id;
+            const userId = appState.user.uid;
+            
+            if (action === 'edit') {
+                const entry = appState.ledger.find(l => l.id === ledgerId);
+                if (entry) {
+                    openTransactionModal(entry.type, entry);
+                }
+            } else if (action === 'delete') {
+                if (window.confirm('Are you sure you want to delete this transaction?')) {
+                    try {
+                        const docRef = doc(db, `artifacts/${appId}/users/${userId}/ledger`, ledgerId);
+                        await deleteDoc(docRef);
+                        showToast("Transaction deleted.", "success");
+                    } catch (error) {
+                        showToast("Failed to delete transaction.", "error");
+                    }
+                }
+            }
+        });
+        
+        // --- TRADE CALENDAR ---
+        const renderCalendar = () => {
+            const calendarGrid = document.getElementById('calendar-grid');
+            const monthYearEl = document.getElementById('calendar-month-year');
+            const monthlyPnlDisplay = document.getElementById('monthly-pnl-display');
+            if (!calendarGrid || !monthYearEl) return;
+
+            const date = appState.calendarDate;
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            monthYearEl.textContent = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            // 1. Aggregate trade data for the current month
+            const tradesByDate = {};
+            const tradesThisMonth = appState.trades.filter(t => {
+                if (!t.exitDate) return false;
+                const exitDate = t.exitDate.toDate();
+                return exitDate.getFullYear() === year && exitDate.getMonth() === month;
+            });
+
+            tradesThisMonth.forEach(t => {
+                const day = t.exitDate.toDate().getDate();
+                const pnl = calculateNetPnl(t);
+                if (!tradesByDate[day]) {
+                    tradesByDate[day] = { pnl: 0, trades: 0 };
+                }
+                tradesByDate[day].pnl += pnl;
+                tradesByDate[day].trades++;
+            });
+
+            // 2. Render monthly stat cards
+            const statsGrid = document.getElementById('calendar-stats-grid');
+            if (statsGrid) {
+                const totalTrades = tradesThisMonth.length;
+                const netPnl = tradesThisMonth.reduce((sum, t) => sum + calculateNetPnl(t), 0);
+                const wins = tradesThisMonth.filter(t => calculateNetPnl(t) > 0).length;
+                const winRate = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+                
+                let bestDayPnl = 0;
+                let bestDayDate = null;
+                for(const day in tradesByDate) {
+                    if(tradesByDate[day].pnl > bestDayPnl) {
+                        bestDayPnl = tradesByDate[day].pnl;
+                        bestDayDate = day;
+                    }
+                }
+
+                statsGrid.innerHTML = `
+                    <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"><h3 class="text-sm font-medium" style="color: var(--text-secondary);">Total Trades</h3><p class="text-2xl font-bold mt-2" style="color: var(--text-primary);">${totalTrades}</p></div>
+                    <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"><h3 class="text-sm font-medium" style="color: var(--text-secondary);">Net P&L</h3><p class="text-2xl font-bold mt-2 ${netPnl >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(netPnl)}</p></div>
+                    <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"><h3 class="text-sm font-medium" style="color: var(--text-secondary);">Win Rate</h3><p class="text-2xl font-bold mt-2" style="color: var(--text-primary);">${winRate.toFixed(1)}%</p></div>
+                    <div class="p-5 rounded-lg shadow-sm" style="background-color: var(--bg-primary); border: 1px solid var(--border-color);"><h3 class="text-sm font-medium" style="color: var(--text-secondary);">Best Day</h3><p class="text-2xl font-bold text-green-500 mt-2">${formatCurrency(bestDayPnl)}</p>${bestDayDate ? `<p class="text-xs" style="color: var(--text-muted);">${new Date(year, month, bestDayDate).toLocaleString('default', { month: 'short' })} ${bestDayDate}</p>` : ''}</div>
+                `;
+            }
+
+            // 3. Build calendar grid
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            
+            let calendarCells = [];
+            for (let i = firstDayOfMonth; i > 0; i--) {
+                calendarCells.push({ day: daysInPrevMonth - i + 1, isCurrentMonth: false });
+            }
+            for (let i = 1; i <= daysInMonth; i++) {
+                calendarCells.push({ day: i, isCurrentMonth: true, data: tradesByDate[i] || { pnl: 0, trades: 0 } });
+            }
+            const remainingCells = (7 - (calendarCells.length % 7)) % 7;
+            for (let i = 1; i <= remainingCells; i++) {
+                calendarCells.push({ day: i, isCurrentMonth: false });
+            }
+
+            let html = '';
+            let weeklyPnl = 0;
+            let monthlyPnl = 0;
+
+            calendarCells.forEach((cell, index) => {
+                if (cell.isCurrentMonth) {
+                    weeklyPnl += cell.data.pnl;
+                    monthlyPnl += cell.data.pnl;
+                }
+
+                const cellClass = cell.isCurrentMonth ? 'var(--text-primary)' : 'var(--text-muted)';
+                const bgClass = cell.isCurrentMonth && cell.data.pnl !== 0
+                    ? (cell.data.pnl > 0 ? 'color-mix(in srgb, #22c55e 10%, var(--bg-primary))' : 'color-mix(in srgb, #ef4444 10%, var(--bg-primary))')
+                    : 'var(--bg-primary)';
+                
+                html += `
+                    <div class="calendar-day p-2 text-left" style="background-color: ${bgClass}; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold" style="color: ${cellClass};">${cell.day}</span>
+                            ${cell.isCurrentMonth && cell.data.trades > 0 ? `<i data-feather="book-open" class="h-3 w-3" style="color: var(--text-muted);"></i>` : ''}
+                        </div>
+                        ${cell.isCurrentMonth ? `
+                        <div class="mt-2">
+                            <p class="${cell.data.pnl > 0 ? 'text-green-500' : cell.data.pnl < 0 ? 'text-red-500' : 'text-slate-400'} font-semibold">${formatCurrency(cell.data.pnl)}</p>
+                            <p class="text-xs" style="color: var(--text-muted);">${cell.data.trades} trades</p>
+                        </div>` : ''}
+                    </div>
+                `;
+
+                if ((index + 1) % 7 === 0) {
+                    const weeklyPnlColor = weeklyPnl > 0 ? 'text-green-500' : weeklyPnl < 0 ? 'text-red-500' : 'text-slate-400';
+                    html += `
+                        <div class="calendar-day p-2 text-left" style="background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                            <p class="font-bold" style="color: var(--text-primary);">Week ${ (index + 1) / 7 }</p>
+                             <div class="mt-2">
+                                <p class="${weeklyPnlColor} font-semibold">${formatCurrency(weeklyPnl)}</p>
+                            </div>
+                        </div>
+                    `;
+                    weeklyPnl = 0;
+                }
+            });
+
+            calendarGrid.innerHTML = html;
+            monthlyPnlDisplay.textContent = `Monthly P&L: ${formatCurrency(monthlyPnl)}`;
+            monthlyPnlDisplay.className = `font-semibold ${monthlyPnl > 0 ? 'text-green-500' : monthlyPnl < 0 ? 'text-red-500' : ''}`;
+            feather.replace();
+        };
+            
+        document.getElementById('prev-month-btn')?.addEventListener('click', () => {
+            appState.calendarDate.setMonth(appState.calendarDate.getMonth() - 1);
+            renderCalendar();
+        });
+        document.getElementById('next-month-btn')?.addEventListener('click', () => {
+            appState.calendarDate.setMonth(appState.calendarDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        // --- PROFILE MANAGEMENT ---
+        const renderProfilePage = (profileData) => {
+            if (!appState.user) return;
+            document.getElementById('profile-name').value = profileData.name || '';
+            document.getElementById('profile-email').value = appState.user.email || '';
+            document.getElementById('profile-phone').value = profileData.phone || '';
+            document.getElementById('profile-city').value = profileData.city || '';
+            document.getElementById('profile-member-since').textContent = profileData.createdAt ? formatDate(profileData.createdAt) : 'N/A';
+        };
+        
+        document.getElementById('profile-info-form').addEventListener('submit', async (e) => {
+             e.preventDefault();
+             if (!appState.user) {
+                showToast("You must be logged in.", "error");
+                return;
+             }
+             const button = e.target.querySelector('button[type="submit"]');
+             toggleSpinner(button, true);
+
+             const profileData = {
+                 name: document.getElementById('profile-name').value,
+                 phone: document.getElementById('profile-phone').value,
+                 city: document.getElementById('profile-city').value,
+             };
+             
+             try {
+                 await updateProfile(auth.currentUser, { displayName: profileData.name });
+                 const profileRef = doc(db, `artifacts/${appId}/users/${appState.user.uid}/profile`, 'info');
+                 await setDoc(profileRef, profileData, { merge: true });
+                 document.getElementById('user-display-name').textContent = profileData.name;
+                 showToast("Profile updated successfully!", "success");
+             } catch (error) {
+                 showToast("Error updating profile.", "error");
+             } finally {
+                toggleSpinner(button, false);
+             }
+        });
+        
+        // --- REPORTS PAGE ---
+        const renderReports = () => {
+            const container = document.getElementById('reports-metrics-grid');
+            if(!container) return;
+            const { trades } = appState;
+            const closedTrades = trades.filter(t => t.exitPrice && t.exitDate);
+            if (closedTrades.length === 0) {
+                 container.innerHTML = `<p class="md:col-span-2 text-center p-8" style="color: var(--text-muted);">No closed trades to generate a report.</p>`;
+                 return;
+            }
+
+            const tradePnls = closedTrades.map(t => calculateNetPnl(t));
+            const winningTrades = tradePnls.filter(pnl => pnl > 0);
+            const losingTrades = tradePnls.filter(pnl => pnl < 0);
+            
+            const metrics = {
+                'Best Trade': Math.max(...tradePnls),
+                'Worst Trade': Math.min(...tradePnls),
+                'Average Winning Trade': winningTrades.length ? winningTrades.reduce((a, b) => a + b, 0) / winningTrades.length : 0,
+                'Average Losing Trade': losingTrades.length ? losingTrades.reduce((a, b) => a + b, 0) / losingTrades.length : 0,
+                'Number of Winning Trades': winningTrades.length,
+                'Number of Losing Trades': losingTrades.length,
+            };
+            
+            let html = '';
+            for (const [key, value] of Object.entries(metrics)) {
+                let valueColor = '';
+                if (key.includes('Best') || key.includes('Winning')) valueColor = 'text-green-500';
+                if (key.includes('Worst') || key.includes('Losing')) valueColor = 'text-red-500';
+
+                html += `
+                    <div class="flex justify-between border-b py-2" style="border-color: var(--border-color);">
+                        <span style="color: var(--text-secondary);">${key}</span>
+                        <span class="font-semibold ${valueColor}">${typeof value === 'number' && key !== 'Number of Winning Trades' && key !== 'Number of Losing Trades' ? formatCurrency(value) : value}</span>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        };
+        
+        // --- TRADE STATEMENT ---
+        const renderStatement = () => {
+            const tbody = document.getElementById('statement-tbody');
+            if (!tbody) return;
+
+            const combined = [
+                ...appState.trades.filter(t => t.exitDate).map(t => ({...t, type: 'Trade', date: t.exitDate})),
+                ...appState.ledger.map(l => ({...l, type: l.type, date: l.date}))
+            ];
+
+            combined.sort((a, b) => b.date.toDate() - a.date.toDate());
+
+            tbody.innerHTML = '';
+            if (combined.length === 0) {
+                 tbody.innerHTML = `<tr><td colspan="9" class="text-center p-8" style="color: var(--text-muted);">No transactions to display.</td></tr>`;
+                 return;
+            }
+
+            combined.forEach(item => {
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid var(--border-color)';
+                
+                let rowHtml = '';
+                if(item.type === 'Trade') {
+                    const grossPnl = (item.exitPrice - item.entryPrice) * item.quantity * (item.direction === 'Short' ? -1 : 1);
+                    const charges = (item.brokerage || 0) + (item.otherFees || 0);
+                    const netPnl = grossPnl - charges;
+
+                    row.dataset.type = 'trade';
+                    row.dataset.strategy = item.strategy;
+                    rowHtml = `
+                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(item.date)}</td>
+                        <td class="px-6 py-4 font-medium">${item.tradeType} (${item.direction})</td>
+                        <td class="px-6 py-4 font-semibold">${item.asset}</td>
+                        <td class="px-6 py-4">${item.strategy}</td>
+                        <td class="px-6 py-4 font-semibold ${grossPnl >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(grossPnl)}</td>
+                        <td class="px-6 py-4 text-red-500">${formatCurrency(charges)}</td>
+                        <td class="px-6 py-4 font-semibold ${netPnl >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(netPnl)}</td>
+                        <td class="px-6 py-4">-</td>
+                        <td class="px-6 py-4 text-xs" style="color: var(--text-muted);">${item.reasons || '-'}</td>
+                    `;
+                } else { // Deposit or Withdrawal
+                    row.dataset.type = item.type.toLowerCase();
+                    row.dataset.strategy = 'N/A';
+                    const isDeposit = item.type === 'Deposit';
+                    if (isDeposit) {
+                        row.style.backgroundColor = 'color-mix(in srgb, #22c55e 10%, var(--bg-primary))';
+                    } else {
+                        row.style.backgroundColor = 'color-mix(in srgb, #ef4444 10%, var(--bg-primary))';
+                    }
+
+                    rowHtml = `
+                        <td class="px-6 py-4 whitespace-nowrap">${formatDate(item.date)}</td>
+                        <td class="px-6 py-4 font-medium ${isDeposit ? 'text-green-600' : 'text-red-600'}">${item.type}</td>
+                        <td class="px-6 py-4">Fund Transaction</td>
+                        <td class="px-6 py-4">-</td>
+                        <td class="px-6 py-4">-</td>
+                        <td class="px-6 py-4">-</td>
+                        <td class="px-6 py-4">-</td>
+                        <td class="px-6 py-4 font-semibold ${isDeposit ? 'text-green-600' : 'text-red-600'}">${isDeposit ? '+' : '-'}${formatCurrency(item.amount)}</td>
+                        <td class="px-6 py-4 text-xs" style="color: var(--text-muted);">${item.notes || '-'}</td>
+                    `;
+                }
+                row.dataset.date = item.date.toDate().toISOString().split('T')[0];
+                row.innerHTML = rowHtml;
+                tbody.appendChild(row);
+            });
+        };
+        
+        // --- CHART.JS ---
+        let charts = {};
+        const createChart = (ctx, config) => {
+            if(!ctx) return;
+            if (charts[ctx.canvas.id]) charts[ctx.canvas.id].destroy();
+            charts[ctx.canvas.id] = new Chart(ctx, config);
+        };
+        const getChartColors = () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const htmlStyles = getComputedStyle(document.documentElement);
+            return {
+                textColor: htmlStyles.getPropertyValue('--text-primary'),
+                gridColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                tooltipBg: isDark ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                primary: '#3b82f6', 
+                green: '#22c55e', 
+                red: '#ef4444',
+                chartRed: '#f87171',
+                chartGreen: '#4ade80',
+                teal: '#2dd4bf',
+                orange: '#f97316'
+            };
+        };
+
+        function renderAllCharts() {
+            const colors = getChartColors();
+            const { trades, ledger } = appState;
+            const closedTrades = trades.filter(t => t.exitDate).sort((a,b) => a.exitDate.toDate() - b.exitDate.toDate());
+
+            // --- Account Balance Chart ---
+            const balanceCtx = document.getElementById('accountBalanceChart')?.getContext('2d');
+            const timelineEvents = [];
+            
+            ledger.forEach(l => timelineEvents.push({ date: l.date.toDate(), type: l.type, amount: l.amount }));
+            trades.forEach(t => {
+                timelineEvents.push({ date: t.entryDate.toDate(), type: 'entry', amount: t.entryPrice * t.quantity });
+                if (t.exitDate) {
+                    const pnl = calculateNetPnl(t);
+                    timelineEvents.push({ date: t.exitDate.toDate(), type: 'exit', amount: t.entryPrice * t.quantity, pnl: pnl });
+                }
+            });
+            
+            timelineEvents.sort((a,b) => a.date - b.date);
+            
+            let cash = 0;
+            let deployedCapital = 0;
+            const balanceLabels = ["Start"];
+            const accountValueData = [0];
+            const capitalDeployedData = [0];
+
+            timelineEvents.forEach(event => {
+                switch(event.type) {
+                    case 'Deposit':
+                        cash += event.amount;
+                        break;
+                    case 'Withdrawal':
+                        cash -= event.amount;
+                        break;
+                    case 'entry':
+                        cash -= event.amount;
+                        deployedCapital += event.amount;
+                        break;
+                    case 'exit':
+                        const exitValue = event.amount + event.pnl;
+                        cash += exitValue;
+                        deployedCapital -= event.amount;
+                        break;
+                }
+                balanceLabels.push(formatDate(event.date));
+                accountValueData.push(cash + deployedCapital);
+                capitalDeployedData.push(deployedCapital);
+            });
+
+             createChart(balanceCtx, {
+                type: 'line',
+                data: {
+                    labels: balanceLabels,
+                    datasets: [{
+                        label: 'Account Value',
+                        data: accountValueData,
+                        borderColor: colors.teal,
+                        backgroundColor: 'rgba(45, 212, 191, 0.1)',
+                        fill: false, tension: 0.1,
+                    }, {
+                        label: 'Capital Deployed',
+                        data: capitalDeployedData,
+                        borderColor: colors.orange,
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        fill: false, tension: 0.1,
+                    }]
+                },
+                 options: { responsive: true, scales: { x: { ticks: { color: colors.textColor }, grid: { color: colors.gridColor } }, y: { ticks: { color: colors.textColor, callback: (value) => formatCurrency(value) }, grid: { color: colors.gridColor } } }, plugins: { legend: { labels: { color: colors.textColor } } } }
+            });
+
+
+            // --- Equity Curve Chart ---
+            const equityCtx = document.getElementById('equityCurveChart')?.getContext('2d');
+            let runningPnl = 0;
+            const equityData = closedTrades.map(t => {
+                const pnl = calculateNetPnl(t);
+                runningPnl += pnl;
+                return runningPnl;
+            });
+
+            createChart(equityCtx, {
+                type: 'line',
+                data: {
+                    labels: closedTrades.map((_, i) => `Trade ${i + 1}`),
+                    datasets: [{
+                        label: 'Cumulative P&L',
+                        data: [0, ...equityData],
+                        borderColor: colors.primary,
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true, tension: 0.1, pointRadius: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                         x: { ticks: { color: colors.textColor, autoSkip: true, maxTicksLimit: 10 }, grid: { color: colors.gridColor } },
+                         y: { ticks: { color: colors.textColor, callback: (value) => formatCurrency(value) }, grid: { color: colors.gridColor } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // --- Monthly Performance Chart ---
+            const monthlyCtx = document.getElementById('monthlyPerformanceChart')?.getContext('2d');
+            const monthlyPnl = {};
+            closedTrades.forEach(trade => {
+                const pnl = calculateNetPnl(trade);
+                const monthKey = trade.exitDate.toDate().toLocaleString('default', { month: 'short', year: '2-digit' });
+                if(!monthlyPnl[monthKey]) monthlyPnl[monthKey] = 0;
+                monthlyPnl[monthKey] += pnl;
+            });
+            createChart(monthlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(monthlyPnl),
+                    datasets: [{
+                        label: 'Monthly P&L',
+                        data: Object.values(monthlyPnl),
+                        backgroundColor: (context) => context.raw >= 0 ? colors.green : colors.red,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                     responsive: true,
+                     scales: {
+                        x: { ticks: { color: colors.textColor }, grid: { display: false } },
+                        y: { ticks: { color: colors.textColor, callback: (value) => formatCurrency(value) }, grid: { color: colors.gridColor } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+             // --- P&L by Segment Chart ---
+            const segmentCtx = document.getElementById('pnlBySegmentChart')?.getContext('2d');
+            const pnlBySegment = {};
+            closedTrades.forEach(trade => {
+                const pnl = calculateNetPnl(trade);
+                const segment = trade.segment || 'Other';
+                if (!pnlBySegment[segment]) pnlBySegment[segment] = 0;
+                pnlBySegment[segment] += pnl;
+            });
+             createChart(segmentCtx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(pnlBySegment),
+                    datasets: [{
+                        label: 'Net P&L',
+                        data: Object.values(pnlBySegment),
+                        backgroundColor: [colors.primary, colors.green, colors.red, colors.orange, colors.teal],
+                    }]
+                },
+                options: { responsive: true, scales: { x: { ticks: { color: colors.textColor }, grid: { display: false } }, y: { ticks: { color: colors.textColor, callback: (value) => formatCurrency(value) }, grid: { color: colors.gridColor } } }, plugins: { legend: { display: false } } }
+            });
+
+            // --- Performance by Day of Week Chart ---
+            const dayPerfCtx = document.getElementById('performanceByDayChart')?.getContext('2d');
+            const pnlByDay = [0, 0, 0, 0, 0, 0, 0]; // Sun - Sat
+            closedTrades.forEach(trade => {
+                const pnl = calculateNetPnl(trade);
+                const dayOfWeek = trade.exitDate.toDate().getDay();
+                pnlByDay[dayOfWeek] += pnl;
+            });
+            createChart(dayPerfCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                    datasets: [{
+                        label: 'P&L',
+                        data: pnlByDay,
+                        backgroundColor: (context) => context.raw >= 0 ? colors.chartGreen : colors.chartRed,
+                    }]
+                },
+                options: { indexAxis: 'y', responsive: true, scales: { x: { ticks: { color: colors.textColor, callback: (value) => formatCurrency(value) }, grid: { color: colors.gridColor } }, y: { ticks: { color: colors.textColor }, grid: { display: false } } }, plugins: { legend: { display: false } } }
+            });
+            
+            // --- ADDED: Daily Win Rate vs Avg Win Rate Chart ---
+            const dailyWinRateCtx = document.getElementById('dailyWinRateChart')?.getContext('2d');
+            if (dailyWinRateCtx && closedTrades.length > 0) {
+                const dailyStats = {};
+                closedTrades.forEach(trade => {
+                    const pnl = calculateNetPnl(trade);
+                    const dateKey = trade.exitDate.toDate().toISOString().split('T')[0];
+                    if (!dailyStats[dateKey]) {
+                        dailyStats[dateKey] = { wins: 0, total: 0 };
+                    }
+                    if (pnl > 0) {
+                        dailyStats[dateKey].wins++;
+                    }
+                    dailyStats[dateKey].total++;
+                });
+
+                const sortedDates = Object.keys(dailyStats).sort();
+                let cumulativeWins = 0;
+                let cumulativeTrades = 0;
+
+                const dailyWinRates = [];
+                const avgWinRates = [];
+
+                sortedDates.forEach(date => {
+                    const stats = dailyStats[date];
+                    
+                    const dailyRate = (stats.wins / stats.total) * 100;
+                    dailyWinRates.push(dailyRate);
+                    
+                    cumulativeWins += stats.wins;
+                    cumulativeTrades += stats.total;
+                    const avgRate = (cumulativeTrades > 0) ? (cumulativeWins / cumulativeTrades) * 100 : 0;
+                    avgWinRates.push(avgRate);
+                });
+
+                createChart(dailyWinRateCtx, {
+                    type: 'line',
+                    data: {
+                        labels: sortedDates,
+                        datasets: [{
+                            label: 'Daily Win Rate',
+                            data: dailyWinRates,
+                            borderColor: colors.primary,
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.2,
+                        }, {
+                            label: 'Average Win Rate',
+                            data: avgWinRates,
+                            borderColor: colors.green,
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            tension: 0.2,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { 
+                                ticks: { color: colors.textColor, autoSkip: true, maxTicksLimit: 15 }, 
+                                grid: { color: colors.gridColor } 
+                            },
+                            y: { 
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: { 
+                                    color: colors.textColor, 
+                                    callback: (value) => value + '%'
+                                }, 
+                                grid: { color: colors.gridColor } 
+                            }
+                        },
+                        plugins: {
+                            legend: { labels: { color: colors.textColor } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed.y !== null) {
+                                            label += context.parsed.y.toFixed(2) + '%';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // --- SCROLL TO TOP ---
+        const scrollToTopBtn = document.getElementById('scroll-to-top-btn');
+        if (mainContent && scrollToTopBtn) {
+             mainContent.addEventListener('scroll', () => {
+                if (mainContent.scrollTop > 300) {
+                    scrollToTopBtn.classList.remove('hidden');
+                } else {
+                    scrollToTopBtn.classList.add('hidden');
+                }
+            });
+            scrollToTopBtn.addEventListener('click', () => mainContent.scrollTo({ top: 0, behavior: 'smooth' }));
+        }
+
+        // --- INITIAL LOAD ---
+        applyTheme();
+    </script>
+</body>
+</html>
