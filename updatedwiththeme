@@ -17,8 +17,8 @@
             --bg-secondary: #f8f9fa;
             --bg-tertiary: #e9ecef;
             --text-primary: #212529;
-            --text-secondary: #6c757d;
-            --text-muted: #adb5bd;
+            --text-secondary: #2c333a;
+            --text-muted: #3e444a;
             --border-color: #dee2e6;
             --shadow: rgba(0, 0, 0, 0.1);
             --accent-color: #007bff;
@@ -1394,8 +1394,8 @@
                     <td class="px-6 py-4 font-semibold ${isDeposit ? 'text-green-500' : 'text-red-500'}">${formatCurrency(entry.amount)}</td>
                     <td class="px-6 py-4 text-xs">${entry.notes || '-'}</td>
                     <td class="px-6 py-4 flex items-center space-x-2">
-                        <button data-action="edit" data-id="${entry.id}" class="p-1 hover:text-blue-500" style="color: var(--text-primary);"><i data-feather="edit-2" class="h-4 w-4 pointer-events-none"></i></button>
-                        <button data-action="delete" data-id="${entry.id}" class="p-1 hover:text-red-500" style="color: var(--text-primary);"><i data-feather="trash-2" class="h-4 w-4 pointer-events-none"></i></button>
+                        <button data-action="edit" data-id="${entry.id}" class="p-1 hover:bg-slate-200" style="color: var(--text-primary);"><i data-feather="edit-2" class="h-4 w-4 pointer-events-none"></i></button>
+                        <button data-action="delete" data-id="${entry.id}" class="p-1 hover:bg-slate-200" style="color: var(--text-primary);"><i data-feather="trash-2" class="h-4 w-4 pointer-events-none"></i></button>
                     </td>
                 `;
                 tbody.appendChild(row);
